@@ -3,6 +3,7 @@ const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcrypt');
 
 const app = express();
+app.use(express.json());
 const PORT = 8000
 const prisma = new PrismaClient();
 
@@ -20,7 +21,7 @@ app.post('/api/auth/register', async (req, res) => {
       password: hashedPassword
     }
   })
-  res.send('<h1>Hello World</h1>');
+  res.json(user);
 });
 
 app.listen(PORT, () => {
