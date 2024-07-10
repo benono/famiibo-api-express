@@ -1,6 +1,8 @@
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+require('dotenv').config();
 
 const app = express();
 app.use(express.json());
@@ -23,6 +25,30 @@ app.post('/api/auth/register', async (req, res) => {
   })
   res.json(user);
 });
+
+// login
+app.post('/api/auth/login', async (req, res) => {
+  const {email, password} = req.body;
+  const user = await prisma.user.findUnique({
+    where: {
+      email
+    }
+  })
+  if (!user) {
+    return res
+      .status(401)
+      .json({error: 'User not found'});
+  }
+  const passwordMatch = await bcrypt.compare(password, user.password);
+  if (!passwordMatch) {
+    return res
+      .status(401)
+      .json({error: 'Invalid password'});
+  }
+  const token = jwt.sign({userId: user.id}, process.env.SECRET_KEY , {expiresIn: '1d'});
+  res.json({token});
+
+})
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
