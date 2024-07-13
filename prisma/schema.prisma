@@ -13,16 +13,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Post {
-  id        Int      @id @default(autoincrement())
-  title     String
-  content   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  author    User     @relation(fields: [authorId], references: [id])
-  authorId  Int
-}
-
 model Family {
   id        Int        @id @default(autoincrement())
   name      String     @unique
@@ -36,16 +26,13 @@ model Family {
 
 model User {
   id          Int           @id @default(autoincrement())
-  email       String
+  email       String        @unique
   role        UserRole
   familyId    Int
   family      Family        @relation(fields: [familyId], references: [id])
-  username    String
+  name        String
   password    String
-  posts       Post[]
   Transaction Transaction[]
-
-  @@unique([familyId, email])
 }
 
 enum UserRole {
