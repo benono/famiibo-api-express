@@ -13,14 +13,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id       Int    @id @default(autoincrement())
-  email    String @unique
-  username String
-  password String
-  posts    Post[]
-}
-
 model Post {
   id        Int      @id @default(autoincrement())
   title     String
@@ -29,4 +21,118 @@ model Post {
   updatedAt DateTime @updatedAt
   author    User     @relation(fields: [authorId], references: [id])
   authorId  Int
+}
+
+model Family {
+  id        Int        @id @default(autoincrement())
+  name      String     @unique
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  Account   Account[]
+  Category  Category[]
+  User      User[]
+  Payee     Payee[]
+}
+
+model User {
+  id          Int           @id @default(autoincrement())
+  email       String
+  role        UserRole
+  familyId    Int
+  family      Family        @relation(fields: [familyId], references: [id])
+  username    String
+  password    String
+  posts       Post[]
+  Transaction Transaction[]
+
+  @@unique([familyId, email])
+}
+
+enum UserRole {
+  ADMIN
+  MEMBER
+}
+
+model Account {
+  id          Int           @id @default(autoincrement())
+  name        String
+  balance     Int
+  type        AccountType
+  familyId    Int
+  family      Family        @relation(fields: [familyId], references: [id])
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  Transaction Transaction[]
+
+  @@unique([familyId, name])
+}
+
+enum AccountType {
+  CHECKING
+  SAVINGS
+  CASH
+  CREDIT
+  INVESTMENT
+}
+
+model Category {
+  id          Int           @id @default(autoincrement())
+  order       Int           @default(0)
+  name        String
+  familyId    Int
+  family      Family        @relation(fields: [familyId], references: [id])
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  Transaction Transaction[]
+
+  @@unique([familyId, name])
+}
+
+model Currency {
+  id          Int           @id @default(autoincrement())
+  code        String
+  name        String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  Transaction Transaction[]
+
+  @@unique([code, name])
+}
+
+model Payee {
+  id          Int           @id @default(autoincrement())
+  name        String
+  familyId    Int
+  family      Family        @relation(fields: [familyId], references: [id])
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  Transaction Transaction[]
+
+  @@unique([familyId, name])
+}
+
+model Transaction {
+  id          Int             @id @default(autoincrement())
+  amount      Decimal
+  type        TransactionType
+  date        DateTime
+  description String?
+  userId      Int
+  user        User            @relation(fields: [userId], references: [id])
+  currencyId  Int
+  currency    Currency        @relation(fields: [currencyId], references: [id])
+  accountId   Int
+  account     Account         @relation(fields: [accountId], references: [id])
+  payeeId     Int
+  payee       Payee           @relation(fields: [payeeId], references: [id])
+  categoryId  Int
+  category    Category        @relation(fields: [categoryId], references: [id])
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  TRANSFER
 }
