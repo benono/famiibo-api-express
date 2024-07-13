@@ -22,6 +22,20 @@ model Family {
   Category  Category[]
   User      User[]
   Payee     Payee[]
+  Invite    Invite[]
+}
+
+model Invite {
+  id          Int      @id @default(autoincrement())
+  inviteCode  String   @unique
+  familyId    Int
+  family      Family   @relation(fields: [familyId], references: [id])
+  expiresAt   DateTime
+  isUsed      Boolean  @default(false)
+  createdById Int
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model User {
@@ -33,6 +47,7 @@ model User {
   name        String
   password    String
   Transaction Transaction[]
+  Invite      Invite[]
 }
 
 enum UserRole {
