@@ -7,21 +7,55 @@ require('dotenv').config();
 const router = require('express').Router();
 const prisma = new PrismaClient();
 
-// Register user
-router.post('/register', async (req, res) => {
-  console.log('start')
+
+// 新規家族作成とユーザー登録
+router.post('/register/new-family', async (req, res) => {
+  const { familyName, userName, email, password } = req.body;
   console.log(req.body)
-  const {username, email, password} = req.body;
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
+  // トランザクションを使用して家族とユーザーを同時に作成
+  const result = await prisma.$transaction(async (prisma) => {
+    const family = await prisma.family.create({ data: { name: familyName } });
+    const user = await prisma.user.create({
+      data: {
+        name: userName,
+        email,
+        password: hashedPassword,
+        familyId: family.id,
+        role: 'ADMIN'
+      }
+    });
+    return { family, user };
+  });
+  // レスポンス
+  res.json(result);
+});
+
+// 招待ユーザーの登録
+router.post('/register/invited', async (req, res) => {
+  const { inviteCode, userName, email, password } = req.body;
+  // inviteCodeの検証
+  const invite = await prisma.invite.findUnique({ where: { code: inviteCode } });
+  if (!invite || invite.expiresAt < new Date()) {
+    return res.status(400).json({ error: 'Invalid or expired invite code' });
+  }
+  // ユーザー作成
   const user = await prisma.user.create({
     data: {
-      username,
+      name: userName,
       email,
-      password: hashedPassword
+      password: hashedPassword,
+      familyId: invite.familyId,
+      role: 'MEMBER'
     }
-  })
-  res.json(user);
+  });
+  // 招待コードを使用済みにする
+  await prisma.invite.update({
+    where: { id: invite.id },
+    data: { used: true }
+  });
+  // レスポンス
 });
 
 // login
