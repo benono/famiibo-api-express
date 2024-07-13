@@ -7,7 +7,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-const PORT = 8000
+const PORT = 8888
 
 app.use('/api/auth', authRouter);
 
