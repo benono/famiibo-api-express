@@ -48,6 +48,9 @@ model User {
   password    String
   Transaction Transaction[]
   Invite      Invite[]
+  Account     Account[]
+  Category    Category[]
+  Payee       Payee[]
 }
 
 enum UserRole {
@@ -62,6 +65,8 @@ model Account {
   type        AccountType
   familyId    Int
   family      Family        @relation(fields: [familyId], references: [id])
+  createdById Int
+  createdBy   User          @relation(fields: [createdById], references: [id])
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   Transaction Transaction[]
@@ -83,6 +88,8 @@ model Category {
   name        String
   familyId    Int
   family      Family        @relation(fields: [familyId], references: [id])
+  createdById Int
+  createdBy   User          @relation(fields: [createdById], references: [id])
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   Transaction Transaction[]
@@ -106,6 +113,8 @@ model Payee {
   name        String
   familyId    Int
   family      Family        @relation(fields: [familyId], references: [id])
+  createdById Int
+  createdBy   User          @relation(fields: [createdById], references: [id])
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   Transaction Transaction[]
