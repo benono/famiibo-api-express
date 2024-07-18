@@ -41,6 +41,24 @@ router.post('/',isAuthenticated, async (req, res) => {
   }
 });
 
+// Get Accounts
+router.get('/', isAuthenticated, async (req, res) => {
+  try {
+    const accounts = await prisma.account.findMany({
+      where: {
+        familyId: req.familyId
+      },
+      include: {
+        currency: true
+    }
+  })
+  res.status(200).json(accounts);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({message: 'Internal server error'});
+  }
+})
+
 
 module.exports = router;
 
