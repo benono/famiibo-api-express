@@ -14,15 +14,16 @@ datasource db {
 }
 
 model Family {
-  id        Int        @id @default(autoincrement())
-  name      String     @unique
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  Account   Account[]
-  Category  Category[]
-  User      User[]
-  Payee     Payee[]
-  Invite    Invite[]
+  id          Int           @id @default(autoincrement())
+  name        String        @unique
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  Account     Account[]
+  Category    Category[]
+  User        User[]
+  Payee       Payee[]
+  Invite      Invite[]
+  Transaction Transaction[]
 }
 
 model Invite {
@@ -65,6 +66,8 @@ model Account {
   type        AccountType
   familyId    Int
   family      Family        @relation(fields: [familyId], references: [id])
+  currencyId  Int           @default(1)
+  currency    Currency      @relation(fields: [currencyId], references: [id])
   createdById Int
   createdBy   User          @relation(fields: [createdById], references: [id])
   createdAt   DateTime      @default(now())
@@ -101,9 +104,11 @@ model Currency {
   id          Int           @id @default(autoincrement())
   code        String
   name        String
+  symbol      String
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   Transaction Transaction[]
+  Account     Account[]
 
   @@unique([code, name])
 }
@@ -126,16 +131,18 @@ model Transaction {
   id          Int             @id @default(autoincrement())
   amount      Decimal
   type        TransactionType
-  date        DateTime
+  date        DateTime        @default(now()) @map("yyyy/mm/dd")
   description String?
   userId      Int
   user        User            @relation(fields: [userId], references: [id])
+  familyId    Int
+  family      Family          @relation(fields: [familyId], references: [id])
   currencyId  Int
   currency    Currency        @relation(fields: [currencyId], references: [id])
   accountId   Int
   account     Account         @relation(fields: [accountId], references: [id])
-  payeeId     Int
-  payee       Payee           @relation(fields: [payeeId], references: [id])
+  payeeId     Int?
+  payee       Payee?          @relation(fields: [payeeId], references: [id])
   categoryId  Int
   category    Category        @relation(fields: [categoryId], references: [id])
   createdAt   DateTime        @default(now())
