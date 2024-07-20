@@ -7,6 +7,7 @@ const accountRouter = require("./app/routers/account");
 const userRouter = require("./app/routers/user");
 const transactionRouter = require("./app/routers/transaction");
 const payeeRouter = require("./app/routers/payee");
+const categoryRouter = require("./app/routers/category");
 
 const app = express();
 
@@ -27,6 +28,7 @@ app.use("/api/accounts", accountRouter);
 app.use("/api/users", userRouter);
 app.use("/api/transactions", transactionRouter);
 app.use("/api/payees", payeeRouter);
+app.use("/api/categories", categoryRouter);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
