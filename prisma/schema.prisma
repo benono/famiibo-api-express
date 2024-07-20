@@ -88,6 +88,7 @@ enum AccountType {
 model Category {
   id          Int           @id @default(autoincrement())
   order       Int           @default(0)
+  type        CategoryType  @default(EXPENSE)
   name        String
   familyId    Int
   family      Family        @relation(fields: [familyId], references: [id])
@@ -153,4 +154,9 @@ enum TransactionType {
   DEPOSIT
   WITHDRAWAL
   TRANSFER
+}
+
+enum CategoryType {
+  INCOME
+  EXPENSE
 }
