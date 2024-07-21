@@ -35,20 +35,60 @@ router.put("/:id", isAuthenticated, async (req, res) => {
   }
 
   try {
-    const transaction = await prisma.transaction.update({
-      where: { id },
-      data: {
-        amount,
-        date: new Date(date),
-        type,
-        accountId,
-        categoryId,
-        payeeId,
-        currencyId,
-        description,
-      },
+    const result = await prisma.$transaction(async (tx) => {
+      const existingTransaction = await tx.transaction.findUnique({
+        where: { id },
+      });
+      if (!existingTransaction) {
+        return res.status(404).json({ message: "Transaction not found" });
+      }
+
+      const transaction = await tx.transaction.update({
+        where: { id },
+        data: {
+          amount,
+          date: new Date(date),
+          type,
+          accountId,
+          categoryId,
+          payeeId,
+          currencyId,
+          description,
+        },
+      });
+
+      // Determine the balance update based on the types of the existing and new transactions
+      let balanceUpdate;
+      if (existingTransaction.type === TransactionType.WITHDRAW) {
+        if (type === TransactionType.WITHDRAW) {
+          const amountDifference = Math.abs(
+            existingTransaction.amount - amount
+          );
+          balanceUpdate = { decrement: amountDifference };
+        } else {
+          balanceUpdate = { increment: existingTransaction.amount + amount };
+        }
+      } else {
+        if (type === TransactionType.WITHDRAW) {
+          balanceUpdate = { decrement: existingTransaction.amount + amount };
+        } else {
+          const amountDifference = Math.abs(
+            existingTransaction.amount - amount
+          );
+          balanceUpdate = { increment: amountDifference };
+        }
+      }
+
+      await tx.account.update({
+        where: { id: accountId },
+        data: {
+          balance: balanceUpdate,
+        },
+      });
+      return transaction;
     });
-    res.status(200).json(transaction);
+
+    res.status(200).json(result);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal server error" });
@@ -76,21 +116,36 @@ router.post("/", isAuthenticated, async (req, res) => {
   }
 
   try {
-    const transaction = await prisma.transaction.create({
-      data: {
-        amount,
-        date: new Date(date),
-        accountId,
-        categoryId,
-        payeeId,
-        currencyId,
-        description,
-        type,
-        familyId: req.familyId,
-        userId: req.userId,
-      },
+    const result = await prisma.$transaction(async (tx) => {
+      const transaction = await tx.transaction.create({
+        data: {
+          amount,
+          date: new Date(date),
+          accountId,
+          categoryId,
+          payeeId,
+          currencyId,
+          description,
+          type,
+          familyId: req.familyId,
+          userId: req.userId,
+        },
+      });
+
+      const balanceUpdate =
+        type === TransactionType.WITHDRAWAL
+          ? { decrement: amount }
+          : { increment: amount };
+
+      await tx.account.update({
+        where: { id: accountId },
+        data: {
+          balance: balanceUpdate,
+        },
+      });
+      return transaction;
     });
-    res.status(201).json(transaction);
+    res.status(201).json(result);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal server error" });
